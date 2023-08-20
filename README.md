@@ -11,7 +11,7 @@ You can build it from source by running the following commands:
 
 ```
 $ git clone https://github.com/julio-cfa/gopariah.git
-$ go build main.go -o gopariah
+$ go build -o gopariah main.go
 ```
 Or, alternatively, you can grab a precompiled binary from the "Releases" section.
 <br>PS: Don't forget to add it to your PATH.
