@@ -4,16 +4,16 @@
 
 # GOPARIAH
 
-GoPariah is a tool to generate reverse shells on the fly. It was inspired by [LazyPariah](https://github.com/octetsplicer/LAZYPARIAH).
+GoPariah is a tool to generate <i>reverse shell payloads</i> on the fly. Instead of having to navigate to [revshells.com](https://revshells.com/) or the [PayloadAllThings](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md) repository, you can easily generate different payloads from the CLI. It was inspired by [LazyPariah](https://github.com/octetsplicer/LAZYPARIAH) (a similar tool written in Ruby).
 
-### Installing or Downloading
+### Installing or Downloading Precompiled Binaries
 You can build it from source by running the following commands:
 
 ```
 $ git clone https://github.com/julio-cfa/gopariah.git
 $ go build -o gopariah main.go
 ```
-Or, alternatively, you can grab a precompiled binary from the "Releases" section.
+Or, alternatively, you can grab a precompiled binary from [releases](https://github.com/julio-cfa/gopariah/releases).
 <br>PS: Don't forget to add it to your PATH.
 ### Usage
 ```
