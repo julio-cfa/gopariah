@@ -4,7 +4,7 @@
 
 # GOPARIAH
 
-GoPariah is a tool to generate <i>reverse shell payloads</i> on the fly. Instead of having to navigate to [revshells.com](https://revshells.com/) or the [PayloadAllThings](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md) repository, you can easily generate different payloads from the CLI. It was inspired by [LazyPariah](https://github.com/octetsplicer/LAZYPARIAH) (a similar tool written in Ruby).
+GoPariah is a tool to generate <i>reverse shell payloads</i> on the fly. Instead of having to navigate to [revshells.com](https://revshells.com/) or the [PayloadAllTheThings](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md) repository, you can easily generate different payloads from the CLI. It was inspired by [LazyPariah](https://github.com/octetsplicer/LAZYPARIAH) (a similar tool written in Ruby).
 
 ### Installing or Downloading Precompiled Binaries
 You can build it from source by running the following commands:
