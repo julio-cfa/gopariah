@@ -11,7 +11,6 @@ func main() {
 
 	shell_type := "/bin/bash"
 
-	// Check if there are enough arguments
 	args := os.Args[0:]
 
 	if len(args) < 2 {
@@ -157,5 +156,3 @@ func main() {
 	}
 
 }
-
-//func help()
