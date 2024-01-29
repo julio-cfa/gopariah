@@ -13,8 +13,6 @@ You can build it from source by running the following commands:
 $ git clone https://github.com/julio-cfa/gopariah.git
 $ go build -o gopariah main.go
 ```
-Or, alternatively, you can grab a precompiled binary from [releases](https://github.com/julio-cfa/gopariah/releases).
-<br>PS: Don't forget to add it to your PATH.
 ### Usage
 ```
 $ ./gopariah --help
